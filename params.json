@@ -1,0 +1,23 @@
+{
+	"name": "F800GS",
+	"signalSource": [ 0, 0, 0, 0, 0, 0 ],
+	"engineOn": false,
+	"shutdownTimer": false,
+	"shutdownTimerValue": -1,
+	"vCutOff": false,
+	"vCutOffValue": -1,
+	"vAutoEn": false,
+	"vAutoEnValue": 12.8,
+	"pwm": false,
+	"pwmValue": -1,
+	"currCutoff": false,
+	"currCutoffValue": -1,
+	"delayTimer": false,
+	"delayTimerValue": -1,
+	"flash": false,
+	"flashType": -1,
+	"flashFreq": -1,
+	"flashCount": -1,
+	"heater1": -1,
+	"heater2": -1
+}
