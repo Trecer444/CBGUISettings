@@ -84,7 +84,7 @@
       <item>
        <widget class="QPushButton" name="pushButtonApply">
         <property name="text">
-         <string>Применить</string>
+         <string>Записать</string>
         </property>
        </widget>
       </item>
@@ -206,6 +206,13 @@ li.checked::marker { content: &quot;\2612&quot;; }
            </widget>
           </item>
           <item>
+           <widget class="QPushButton" name="pushButtonApply_2">
+            <property name="text">
+             <string>Применить</string>
+            </property>
+           </widget>
+          </item>
+          <item>
            <spacer name="horizontalSpacer_3">
             <property name="orientation">
              <enum>Qt::Horizontal</enum>
@@ -319,7 +326,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
               </time>
              </property>
              <property name="currentSection">
-              <enum>QDateTimeEdit::SecondSection</enum>
+              <enum>QDateTimeEdit::HourSection</enum>
              </property>
              <property name="displayFormat">
               <string>H:mm:ss</string>

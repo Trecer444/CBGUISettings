@@ -42,13 +42,10 @@ static const QString inputTypeRU[]
         "Подогрев",
         "Стопы"
     };
-
-class Params
+#pragma pack(push, 8)
+struct Params
 {
-public:
     //параметры платы
-    QString name = "F800GS";
-
     int
         signalSource = 0,
         pwmValue = 50,
@@ -61,13 +58,7 @@ public:
         vCutOffValue = 1250,        //сантивольты (делить на 100)
         vAutoEnValue = 1280,        //сантивольты (делить на 100)
         flashFreq = 200,            //*100
-        currCutOffValue = 7000;     //*100
-
-    // float
-        // vCutOffValue = 12.5,
-        // vAutoEnValue = 12.8,
-        // flashFreq = 2.0,
-        // currCutOffValue = 7.0;
+        currCutOffValue = 700;      //*100
 
     bool
         engineOn = false,
@@ -78,8 +69,8 @@ public:
         currCutOff = false,
         delayTimer = false,
         flash = false;
-private:
 };
+#pragma pack(pop)
 
 class singletonSettings
 {

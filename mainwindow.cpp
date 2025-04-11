@@ -2,6 +2,20 @@
 #include "ui_mainwindow.h"
 //#include <stdio.h>
 
+enum surceStatus{
+    Disable = 0, //1
+    Ignition, //2
+    RegularCons, //3
+    LoBeam,
+    HiBeam,
+    AnyHeadlignt,
+    AnyTurner,
+    LeftTurner,
+    RightTurner,
+    EmergencyLight,
+    Heater,
+    StopLight
+};
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -103,101 +117,178 @@ void hideCh(Ui::MainWindow* ui)
 
 void MainWindow::updateState()
 {
+    int h = 0, m = 0, s = 0;
+    singletonSettings* settings = singletonSettings::getInstance();
     hideCh(ui);
-    switch(ui->comboBoxSignal->currentIndex())
-    {
-    case 0: //Отключено
-        break;
-    case 1: //Зажигание
-        ui->checkBoxEngineOn->show();     //только при работающем двигателе
-        ui->checkBoxTimer->show();        //выключение по таймеру
-        ui->checkBoxVCutoff->show();    //выключение по напряжениею
-        ui->pwmWidget->show();            //ШИМ
-        ui->checkBoxDelayOff->show();     //выключение с задержкой
-        ui->currentControlWidget->show();
-        break;
-    case 2: //Постоянный потребитель
-        ui->checkBoxEngineOn->show();     //только при работающем двигателе
-        // ui->checkBoxTimer->show();     //выключение по таймеру
-        ui->checkBoxVCutoff->show();    //выключение по напряжениею
-        ui->pwmWidget->show();            //ШИМ
-        ui->checkBoxDelayOff->show();     //выключение с задержкой
-        ui->currentControlWidget->show();
-        break;
-    case 3: //Ближний свет
-        ui->checkBoxEngineOn->show();     //только при работающем двигателе
-        ui->checkBoxVCutoff->show();    //выключение по напряжениею
-        ui->pwmWidget->show();            //ШИМ
-        ui->checkBoxDelayOff->show();     //выключение с задержкой
-        ui->checkBoxFlash->show();        //моргать
-        ui->currentControlWidget->show();
-        break;
-    case 4: //Дальний свет
-        ui->checkBoxEngineOn->show();     //только при работающем двигателе
-        ui->checkBoxVCutoff->show();    //выключение по напряжениею
-        ui->pwmWidget->show();            //ШИМ
-        ui->checkBoxDelayOff->show();     //выключение с задержкой
-        ui->checkBoxFlash->show();        //моргать
-        ui->currentControlWidget->show();
-        break;
-    case 5: //Любой свет
-        ui->checkBoxEngineOn->show();     //только при работающем двигателе
-        ui->checkBoxVCutoff->show();    //выключение по напряжениею
-        ui->pwmWidget->show();            //ШИМ
-        ui->checkBoxDelayOff->show();     //выключение с задержкой
-        ui->checkBoxFlash->show();        //моргать
-        ui->currentControlWidget->show();
-        break;
-    case 6: //Поворотники
-        ui->checkBoxEngineOn->show();     //только при работающем двигателе
-        ui->checkBoxVCutoff->show();    //выключение по напряжениею
-        ui->pwmWidget->show();            //ШИМ
-        ui->checkBoxDelayOff->show();     //выключение с задержкой
-        ui->checkBoxFlash->show();        //моргать
-        ui->currentControlWidget->show();
-        break;
-    case 7://Левый поворотник
-        ui->checkBoxEngineOn->show();     //только при работающем двигателе
-        ui->checkBoxVCutoff->show();    //выключение по напряжениею
-        ui->pwmWidget->show();            //ШИМ
-        ui->checkBoxDelayOff->show();     //выключение с задержкой
-        ui->checkBoxFlash->show();        //моргать
-        ui->currentControlWidget->show();
-        break;
-    case 8://Правый поворотник
-        ui->checkBoxEngineOn->show();     //только при работающем двигателе
-        ui->checkBoxVCutoff->show();    //выключение по напряжениею
-        ui->pwmWidget->show();            //ШИМ
-        ui->checkBoxDelayOff->show();     //выключение с задержкой
-        ui->checkBoxFlash->show();        //моргать
-        ui->currentControlWidget->show();
-        break;
-    case 9://Аварийка
-        ui->checkBoxEngineOn->show();     //только при работающем двигателе
-        ui->checkBoxVCutoff->show();    //выключение по напряжениею
-        ui->pwmWidget->show();            //ШИМ
-        ui->checkBoxDelayOff->show();     //выключение с задержкой
-        ui->checkBoxFlash->show();        //моргать
-        ui->currentControlWidget->show();
-        break;
-    case 10://подогрев
-        ui->checkBoxEngineOn->show();     //только при работающем двигателе
-        ui->checkBoxVCutoff->show();    //выключение по напряжениею
-        ui->heaterWidget->show();         //подогрев
-        ui->currentControlWidget->show();
-        break;
-    case 11://стопы
-        ui->checkBoxEngineOn->show();     //только при работающем двигателе
-        ui->checkBoxVCutoff->show();    //выключение по напряжениею
-        ui->pwmWidget->show();            //ШИМ
-        ui->checkBoxDelayOff->show();     //выключение с задержкой
-        ui->checkBoxFlash->show();        //моргать
-        ui->currentControlWidget->show();
+    int signalSourceInd = ui->comboBoxSignal->currentIndex();
 
+    switch (signalSourceInd) {
+    case Ignition:
+    case LoBeam:
+    case HiBeam:
+    case AnyHeadlignt:
+    case AnyTurner:
+    case LeftTurner:
+    case RightTurner:
+    case EmergencyLight:
+    case Heater:
+    case StopLight:
+        ui->checkBoxEngineOn->show();     //только при работающем двигателе
+        ui->checkBoxEngineOn->setChecked(settings->chParams[ui->comboBoxChNumber->currentIndex()].engineOn);
         break;
     default:
         break;
     }
+
+    switch (signalSourceInd) {
+    case Ignition:
+    case LoBeam:
+    case HiBeam:
+    case AnyHeadlignt:
+    case AnyTurner:
+    case LeftTurner:
+    case RightTurner:
+    case EmergencyLight:
+    case Heater:
+    case StopLight:
+        ui->checkBoxTimer->show();        //выключение по таймеру
+        ui->checkBoxTimer->setChecked(settings->chParams[ui->comboBoxChNumber->currentIndex()].shutdownTimer);
+        if (settings->chParams[ui->comboBoxChNumber->currentIndex()].shutdownTimer)
+        {
+            ui->timeOutWidget->show();
+            h = settings->chParams[ui->comboBoxChNumber->currentIndex()].shutdownTimerValue/3600;
+            m = (settings->chParams[ui->comboBoxChNumber->currentIndex()].shutdownTimerValue - 3600 * h) / 60;
+            s = settings->chParams[ui->comboBoxChNumber->currentIndex()].shutdownTimerValue % 60;
+            ui->timeEditTOff->setTime(QTime(h, m, s));
+
+        }
+        break;
+    default:
+        break;
+    }
+
+    switch (signalSourceInd) {
+    case Ignition:
+    case RegularCons:
+    case LoBeam:
+    case HiBeam:
+    case AnyHeadlignt:
+    case AnyTurner:
+    case LeftTurner:
+    case RightTurner:
+    case EmergencyLight:
+    case Heater:
+    case StopLight:
+        ui->checkBoxVCutoff->show();    //выключение по напряжениею
+        ui->checkBoxVCutoff->setChecked(settings->chParams[ui->comboBoxChNumber->currentIndex()].vCutOff);
+        if (settings->chParams[ui->comboBoxChNumber->currentIndex()].vCutOff)
+        {
+            ui->vCutOffWidget->show();
+            ui->doubleSpinBoxVCutOff->setValue((double)(settings->chParams[ui->comboBoxChNumber->currentIndex()].vCutOffValue) / 100);
+            ui->checkBoxVCutoffAutoEn->show();
+            ui->checkBoxVCutoffAutoEn->setChecked(settings->chParams[ui->comboBoxChNumber->currentIndex()].vAutoEn);
+            if (settings->chParams[ui->comboBoxChNumber->currentIndex()].vAutoEn) //включение по напряжению
+            {
+                ui->vCutOffAutoEnWidget->show();
+                ui->doubleSpinBoxVCuAutoEn->setValue((double)(settings->chParams[ui->comboBoxChNumber->currentIndex()].vAutoEnValue) / 100);
+            }
+        }
+        break;
+    default:
+        break;
+    }
+
+    switch (signalSourceInd) {
+    case Ignition:
+    case RegularCons:
+    case LoBeam:
+    case HiBeam:
+    case AnyHeadlignt:
+    case AnyTurner:
+    case LeftTurner:
+    case RightTurner:
+    case EmergencyLight:
+    case StopLight:
+        ui->pwmWidget->show();            //ШИМ
+        ui->checkBoxPWM->setChecked(settings->chParams[ui->comboBoxChNumber->currentIndex()].pwm);
+        ui->spinBoxPWM->setValue(settings->chParams[ui->comboBoxChNumber->currentIndex()].pwmValue);
+        break;
+    default:
+        break;
+    }
+
+    switch (signalSourceInd) {
+    case Ignition:
+    case RegularCons:
+    case LoBeam:
+    case HiBeam:
+    case AnyHeadlignt:
+    case AnyTurner:
+    case LeftTurner:
+    case RightTurner:
+    case EmergencyLight:
+    case StopLight:
+        ui->checkBoxDelayOff->show();     //выключение с задержкой
+        ui->checkBoxDelayOff->setChecked(settings->chParams[ui->comboBoxChNumber->currentIndex()].delayTimer);
+        if (settings->chParams[ui->comboBoxChNumber->currentIndex()].delayTimer)  //если отмечено выключение с задержкой
+        {
+            ui->delayWidget->show();
+            h = settings->chParams[ui->comboBoxChNumber->currentIndex()].delayTimerValue/3600;
+            m = (settings->chParams[ui->comboBoxChNumber->currentIndex()].delayTimerValue - 3600 * h) / 60;
+            s = settings->chParams[ui->comboBoxChNumber->currentIndex()].delayTimerValue % 60;
+            ui->timeEditDelay->setTime(QTime(h, m, s));
+        }
+        break;
+    default:
+        break;
+    }
+
+
+
+    switch (signalSourceInd) {
+    case LoBeam:
+    case HiBeam:
+    case AnyHeadlignt:
+    case AnyTurner:
+    case LeftTurner:
+    case RightTurner:
+    case EmergencyLight:
+    case StopLight:
+        ui->checkBoxFlash->show();        //моргать
+        ui->checkBoxFlash->setChecked(settings->chParams[ui->comboBoxChNumber->currentIndex()].flash);
+        ui->doubleSpinBoxFrequency->setValue((double)settings->chParams[ui->comboBoxChNumber->currentIndex()].flashFreq / 100);
+        ui->spinBoxNumFlash->setValue(settings->chParams[ui->comboBoxChNumber->currentIndex()].flashCount);
+
+        if (settings->chParams[ui->comboBoxChNumber->currentIndex()].flash)
+        {
+            ui->flashWidget->show();
+            if (settings->chParams[ui->comboBoxChNumber->currentIndex()].flashType)
+            {
+                ui->radioButtonFew->setChecked(0);
+                ui->radioButtonStrob->setChecked(1);
+
+            }
+            else
+            {
+                ui->radioButtonStrob->setChecked(0);
+                ui->radioButtonFew->setChecked(1);
+            }
+        }
+        break;
+    default:
+        break;
+    }
+
+    switch (signalSourceInd) {
+    case Heater:
+        ui->heaterWidget->show();
+        ui->spinBoxHeater1->setValue(settings->chParams[ui->comboBoxChNumber->currentIndex()].heater1);
+        ui->spinBoxHeater2->setValue(settings->chParams[ui->comboBoxChNumber->currentIndex()].heater2);
+        break;
+    default:
+        break;
+    }
+
 }
 
 void MainWindow::on_comboBoxSignal_currentIndexChanged(int index)
@@ -211,14 +302,8 @@ void MainWindow::on_comboBoxSignal_currentIndexChanged(int index)
 void MainWindow::on_checkBoxEngineOn_stateChanged(int arg1)
 {
     singletonSettings* settings = singletonSettings::getInstance();
-    if (ui->checkBoxEngineOn->isChecked())
-    {
-        settings->chParams[ui->comboBoxChNumber->currentIndex()].engineOn = true; //только при раб двиг
-    }
-    else
-    {
-        settings->chParams[ui->comboBoxChNumber->currentIndex()].engineOn = false; //только при раб двиг
-    }
+    settings->chParams[ui->comboBoxChNumber->currentIndex()].engineOn = ui->checkBoxEngineOn->isChecked();
+    updateState();
 }
 
 
@@ -226,15 +311,7 @@ void MainWindow::on_checkBoxTimer_stateChanged(int arg1)
 {
     singletonSettings* settings = singletonSettings::getInstance();
     settings->chParams[ui->comboBoxChNumber->currentIndex()].shutdownTimer = ui->checkBoxTimer->isChecked(); //таймер
-
-    if (ui->checkBoxTimer->isChecked())
-    {
-        ui->timeOutWidget->show();
-    }
-    else
-    {
-        ui->timeOutWidget->hide();
-    }
+    updateState();
 }
 
 
@@ -255,16 +332,9 @@ void MainWindow::on_checkBoxVCutoffOn_stateChanged(int arg1)
 
 void MainWindow::on_checkBoxVCutoffAutoEn_stateChanged(int arg1)
 {
-     singletonSettings* settings = singletonSettings::getInstance();
+    singletonSettings* settings = singletonSettings::getInstance();
     settings->chParams[ui->comboBoxChNumber->currentIndex()].vAutoEn = ui->checkBoxVCutoffAutoEn->isChecked();
-    if (ui->checkBoxVCutoffAutoEn->isChecked())
-    {
-        ui->vCutOffAutoEnWidget->show();
-    }
-    else
-    {
-        ui->vCutOffAutoEnWidget->hide();
-    }
+    updateState();
 }
 
 
@@ -272,14 +342,7 @@ void MainWindow::on_checkBoxDelayOff_stateChanged(int arg1)
 {
     singletonSettings* settings = singletonSettings::getInstance();
     settings->chParams[ui->comboBoxChNumber->currentIndex()].delayTimer = ui->checkBoxDelayOff->isChecked();
-    if (ui->checkBoxDelayOff->isChecked())
-    {
-        ui->delayWidget->show();
-    }
-    else
-    {
-        ui->delayWidget->hide();
-    }
+    updateState();
 }
 
 
@@ -287,14 +350,7 @@ void MainWindow::on_checkBoxFlash_stateChanged(int arg1)
 {
     singletonSettings* settings = singletonSettings::getInstance();
     settings->chParams[ui->comboBoxChNumber->currentIndex()].flash = ui->checkBoxFlash->isChecked();
-    if (ui->checkBoxFlash->isChecked())
-    {
-        ui->flashWidget->show();
-    }
-    else
-    {
-        ui->flashWidget->hide();
-    }
+    updateState();
 }
 
 
@@ -302,25 +358,7 @@ void MainWindow::on_checkBoxVCutoff_stateChanged(int arg1)
 {
     singletonSettings* settings = singletonSettings::getInstance();
     settings->chParams[ui->comboBoxChNumber->currentIndex()].vCutOff = ui->checkBoxVCutoff->isChecked();
-    if (ui->checkBoxVCutoff->isChecked())
-    {
-        ui->vCutOffWidget->show();
-        ui->checkBoxVCutoffAutoEn->show();
-        if (ui->checkBoxVCutoffAutoEn->isChecked())
-        {
-            ui->vCutOffAutoEnWidget->show();
-        }
-        else
-        {
-            ui->vCutOffAutoEnWidget->hide();
-        }
-    }
-    else
-    {
-        ui->vCutOffWidget->hide();
-        ui->checkBoxVCutoffAutoEn->hide();
-        ui->vCutOffAutoEnWidget->hide();
-    }
+    updateState();
 }
 
 
@@ -385,7 +423,7 @@ void MainWindow::on_timeEditDelay_userTimeChanged(const QTime &time)
 void MainWindow::on_radioButtonStrob_clicked()
 {
     singletonSettings* settings = singletonSettings::getInstance();
-    settings->chParams[ui->comboBoxChNumber->currentIndex()].flashType = 1;
+    settings->chParams[ui->comboBoxChNumber->currentIndex()].flashType = 0;
     ui->label_2->show();
 }
 
@@ -393,7 +431,7 @@ void MainWindow::on_radioButtonStrob_clicked()
 void MainWindow::on_radioButtonFew_clicked()
 {
     singletonSettings* settings = singletonSettings::getInstance();
-    settings->chParams[ui->comboBoxChNumber->currentIndex()].flashType = 2;
+    settings->chParams[ui->comboBoxChNumber->currentIndex()].flashType = 1;
     ui->label_2->hide();
 }
 
@@ -497,95 +535,121 @@ int MainWindow::uartSend()
 {
     singletonSettings* settings = singletonSettings::getInstance();
     QString stringData, buffer;
-    QByteArray data;
+    // QByteArray data((char*)&settings->chParams[0], sizeof(settings->chParams[0]));
     for (int i = 0; i < 6; i++)
     {
         buffer.clear();
-        stringData.append("*Ch=");
+        stringData.append("$");
         buffer.setNum(i);
         stringData.append(buffer);
-        stringData.append(": ");
+        // stringData.append(":");
 
         buffer.clear();
-        stringData.append("signalSource=");
-        stringData.append(buffer.setNum(settings->chParams[i].signalSource));
+        // stringData.append("signalSource=");
+        stringData.append(" ");
+        stringData.append(buffer.setNum(settings->chParams[i].signalSource));           //0
 
         buffer.clear();
-        stringData.append(", pwmValue=");
-        stringData.append(buffer.setNum(settings->chParams[i].pwmValue));
+        // stringData.append(", pwmValue=");
+        stringData.append(" ");
+        stringData.append(buffer.setNum(settings->chParams[i].pwmValue));               //1
 
         buffer.clear();
-        stringData.append(", flashType=");
-        stringData.append(buffer.setNum(settings->chParams[i].flashType));
+        // stringData.append(", flashType=");
+        stringData.append(" ");
+        stringData.append(buffer.setNum(settings->chParams[i].flashType));              //2
 
         buffer.clear();
-        stringData.append(", heater1=");
-        stringData.append(buffer.setNum(settings->chParams[i].heater1));
+        // stringData.append(", heater1=");
+        stringData.append(" ");
+        stringData.append(buffer.setNum(settings->chParams[i].flashCount));             //3
 
         buffer.clear();
-        stringData.append(", heater2=");
-        stringData.append(buffer.setNum(settings->chParams[i].heater2));
+        // stringData.append(", heater2=");
+        stringData.append(" ");
+        stringData.append(buffer.setNum(settings->chParams[i].heater1));                //4
 
         buffer.clear();
-        stringData.append(", delayTimerValue=");
-        stringData.append(buffer.setNum(settings->chParams[i].delayTimerValue));
+        // stringData.append(", delayTimerValue=");
+        stringData.append(" ");
+        stringData.append(buffer.setNum(settings->chParams[i].heater2));                //5
 
         buffer.clear();
-        stringData.append(", shutdownTimerValue=");
-        stringData.append(buffer.setNum(settings->chParams[i].shutdownTimerValue));
+        // stringData.append(", shutdownTimerValue=");
+        stringData.append(" ");
+        stringData.append(buffer.setNum(settings->chParams[i].delayTimerValue));        //6
 
         buffer.clear();
-        stringData.append(", vCutOffValue=");
-        stringData.append(buffer.setNum(settings->chParams[i].vCutOffValue));
+        // stringData.append(", vCutOffValue=");
+        stringData.append(" ");
+        stringData.append(buffer.setNum(settings->chParams[i].shutdownTimerValue));     //7
 
         buffer.clear();
-        stringData.append(", vAutoEnValue=");
-        stringData.append(buffer.setNum(settings->chParams[i].vAutoEnValue));
+        // stringData.append(", vAutoEnValue=");
+        stringData.append(" ");
+        stringData.append(buffer.setNum(settings->chParams[i].vCutOffValue));           //8
 
         buffer.clear();
-        stringData.append(", flashFreq=");
-        stringData.append(buffer.setNum(settings->chParams[i].flashFreq));
+        // stringData.append(", flashFreq=");
+        stringData.append(" ");
+        stringData.append(buffer.setNum(settings->chParams[i].vAutoEnValue));          //9
 
         buffer.clear();
-        stringData.append(", currCutOffValue=");
-        stringData.append(buffer.setNum(settings->chParams[i].currCutOffValue));
+        // stringData.append(", currCutOffValue=");
+        stringData.append(" ");
+        stringData.append(buffer.setNum(settings->chParams[i].flashFreq));              //10
 
         buffer.clear();
-        stringData.append(", engineOn=");
-        stringData.append(buffer.setNum(settings->chParams[i].engineOn));
+        // stringData.append(", engineOn=");
+        stringData.append(" ");
+        stringData.append(buffer.setNum(settings->chParams[i].currCutOffValue));        //11
 
         buffer.clear();
-        stringData.append(", shutdownTimer=");
-        stringData.append(buffer.setNum(settings->chParams[i].shutdownTimer));
+        // stringData.append(", shutdownTimer=");
+        stringData.append(" ");
+        stringData.append(buffer.setNum(settings->chParams[i].engineOn));               //12
 
         buffer.clear();
-        stringData.append(", vCutOff=");
-        stringData.append(buffer.setNum(settings->chParams[i].vCutOff));
+        // stringData.append(", vCutOff=");
+        stringData.append(" ");
+        stringData.append(buffer.setNum(settings->chParams[i].shutdownTimer));          //13
 
         buffer.clear();
-        stringData.append(", vAutoEn=");
-        stringData.append(buffer.setNum(settings->chParams[i].vAutoEn));
+        // stringData.append(", vAutoEn=");
+        stringData.append(" ");
+        stringData.append(buffer.setNum(settings->chParams[i].vCutOff));                //14
 
         buffer.clear();
-        stringData.append(", pwm=");
-        stringData.append(buffer.setNum(settings->chParams[i].pwm));
+        // stringData.append(", pwm=");
+        stringData.append(" ");
+        stringData.append(buffer.setNum(settings->chParams[i].vAutoEn));                //15
 
         buffer.clear();
-        stringData.append(", currCutOff=");
-        stringData.append(buffer.setNum(settings->chParams[i].currCutOff));
+        // stringData.append(", currCutOff=");
+        stringData.append(" ");
+        stringData.append(buffer.setNum(settings->chParams[i].pwm));                    //16
 
         buffer.clear();
-        stringData.append(", delayTimer=");
-        stringData.append(buffer.setNum(settings->chParams[i].delayTimer));
+        // stringData.append(", delayTimer=");
+        stringData.append(" ");
+        stringData.append(buffer.setNum(settings->chParams[i].currCutOff));             //17
 
         buffer.clear();
-        stringData.append(", flash=");
-        stringData.append(buffer.setNum(settings->chParams[i].flash));
+        // stringData.append(", flash=");
+        stringData.append(" ");
+        stringData.append(buffer.setNum(settings->chParams[i].delayTimer));             //18
 
-        stringData.append("%\n");
+        buffer.clear();
+        // stringData.append(", flash=");
+        stringData.append(" ");
+        stringData.append(buffer.setNum(settings->chParams[i].flash));                  //19
+
+        stringData.append(";");
     }
-    stringData.append("***\n");
-    settings->serialPort.write(stringData.toUtf8());
+    stringData.append("*\n");
+    qsizetype size = stringData.size();
+    qDebug() << size << "\n\n";
+    settings->serialPort.write(stringData.toUtf8(),size);
     settings->serialPort.waitForBytesWritten();
     stringData.clear();
     return 0;
@@ -644,5 +708,6 @@ void MainWindow::on_comboBoxChNumber_currentIndexChanged(int index)
 {
     singletonSettings* settings = singletonSettings::getInstance();
     ui->comboBoxSignal->setCurrentIndex(settings->chParams[ui->comboBoxChNumber->currentIndex()].signalSource);
+    updateState();
 }
 
