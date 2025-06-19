@@ -120,7 +120,9 @@ void MainWindow::updateState()
     int h = 0, m = 0, s = 0;
     singletonSettings* settings = singletonSettings::getInstance();
     hideCh(ui);
-    int signalSourceInd = ui->comboBoxSignal->currentIndex();
+    int signalSourceInd = settings->chParams[ui->comboBoxChNumber->currentIndex()].signalSource;
+    ui->comboBoxSignal->setCurrentIndex(signalSourceInd);
+    // int signalSourceInd = ui->comboBoxSignal->currentIndex();
 
     switch (signalSourceInd) {
     case Ignition:
@@ -650,15 +652,96 @@ int MainWindow::uartSend()
     qsizetype size = stringData.size();
     qDebug() << size << "\n\n";
     settings->serialPort.write(stringData.toUtf8(),size);
-    settings->serialPort.waitForBytesWritten();
+    settings->serialPort.waitForBytesWritten(500);
     stringData.clear();
     return 0;
 }
 
+void MainWindow::uartReceiveParams()
+{
+    singletonSettings* settings = singletonSettings::getInstance();
+
+    settings->serialPort.clear(QSerialPort::AllDirections);
+    settings->serialPort.write("#GET-ParamList\n");
+
+    if (!settings->serialPort.waitForBytesWritten(100)) {
+        qWarning() << "Ошибка записи в порт.";
+        return;
+    }
+
+    QByteArray responseData;
+
+    if (!settings->serialPort.waitForReadyRead(1000)) {
+        qWarning() << "Нет ответа от устройства.";
+        return;
+    }
+
+    // Сразу читаем всё, что есть
+    responseData += settings->serialPort.readAll();
+
+    // А теперь ждём остаток, если нужно
+    QElapsedTimer timer;
+    timer.start();
+    while (timer.elapsed() < 2000) {
+        if (settings->serialPort.waitForReadyRead(100)) {
+            responseData += settings->serialPort.readAll();
+            if (responseData.endsWith("*")) break;
+        }
+    }
+
+    qDebug() << "UART Raw Response:\n" << QString::fromUtf8(responseData);
+    qDebug() << "Bytes received:" << responseData.size();
+
+    QString data = QString::fromUtf8(responseData).trimmed();
+    QStringList packets = data.split(";", Qt::SkipEmptyParts);
+
+    for (const QString& packet : packets) {
+        if (!packet.startsWith("$"))
+            continue;
+
+        QStringList parts = packet.mid(1).split(" ", Qt::SkipEmptyParts);
+        if (parts.size() != 21) {
+            qWarning() << "Неверное количество параметров:" << packet;
+            continue;
+        }
+
+        bool ok = false;
+        int idx = parts[0].toInt(&ok);
+        if (!ok || idx < 0 || idx >= 6) {
+            qWarning() << "Неверный индекс канала:" << parts[0];
+            continue;
+        }
+
+        Params& ch = settings->chParams[idx];
+        int i = 1;
+        ch.signalSource        = parts[i++].toInt();
+        ch.pwmValue            = parts[i++].toInt();
+        ch.flashType           = parts[i++].toInt();
+        ch.flashCount          = parts[i++].toInt();
+        ch.heater1             = parts[i++].toInt();
+        ch.heater2             = parts[i++].toInt();
+        ch.delayTimerValue     = parts[i++].toInt();
+        ch.shutdownTimerValue  = parts[i++].toInt();
+        ch.vCutOffValue        = parts[i++].toInt();
+        ch.vAutoEnValue        = parts[i++].toInt();
+        ch.flashFreq           = parts[i++].toInt();
+        ch.currCutOffValue     = parts[i++].toInt();
+        ch.engineOn            = parts[i++].toInt() != 0;
+        ch.shutdownTimer       = parts[i++].toInt() != 0;
+        ch.vCutOff             = parts[i++].toInt() != 0;
+        ch.vAutoEn             = parts[i++].toInt() != 0;
+        ch.pwm                 = parts[i++].toInt() != 0;
+        ch.currCutOff          = parts[i++].toInt() != 0;
+        ch.delayTimer          = parts[i++].toInt() != 0;
+        ch.flash               = parts[i++].toInt() != 0;
+    }
+
+    qDebug() << "Параметры успешно загружены из UART.";
+}
 
 void MainWindow::on_pushButtonConnect_clicked()
 {
-    qDebug() << "TEST\n";
+    // qDebug() << "TEST\n";
     MainWindow::uartOpen();
 }
 
@@ -708,6 +791,13 @@ void MainWindow::on_comboBoxChNumber_currentIndexChanged(int index)
 {
     singletonSettings* settings = singletonSettings::getInstance();
     ui->comboBoxSignal->setCurrentIndex(settings->chParams[ui->comboBoxChNumber->currentIndex()].signalSource);
+    updateState();
+}
+
+
+void MainWindow::on_pushButtonRead_clicked()
+{
+    uartReceiveParams();
     updateState();
 }
 

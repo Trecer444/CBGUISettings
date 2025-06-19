@@ -30,6 +30,7 @@ public:
     // singletonSettings* settings;
     int uartOpen();
     int uartSend();
+    void uartReceiveParams();
 private slots:
 
     void on_connectionSettingsBtn_triggered();
@@ -89,6 +90,8 @@ private slots:
     void on_pushButtonDisconnect_clicked();
 
     void on_comboBoxChNumber_currentIndexChanged(int index);
+
+    void on_pushButtonRead_clicked();
 
 private:
     Ui::MainWindow *ui;
