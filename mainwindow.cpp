@@ -100,7 +100,7 @@ void hideCh(Ui::MainWindow* ui)
     ui->checkBoxEngineOn->hide();           //только при работающем двигателе
     ui->checkBoxTimer->hide();              //выключение по таймеру
     ui->timeOutWidget->hide();              //выбор времени выключения по таймеру
-    ui->checkBoxVCutoff->hide();          //выключение по напряжениею
+    ui->checkBoxVCutoff->hide();            //выключение по напряжениею
     ui->vCutOffWidget->hide();              //минимальное напряжение отключения
     ui->pwmWidget->hide();                  //ШИМ
     ui->checkBoxDelayOff->hide();           //выключение с задержкой
@@ -181,7 +181,7 @@ void MainWindow::updateState()
     case EmergencyLight:
     case Heater:
     case StopLight:
-        ui->checkBoxVCutoff->show();    //выключение по напряжениею
+        ui->checkBoxVCutoff->show();    //выключение по напряжениею и ограничение тока
         ui->checkBoxVCutoff->setChecked(settings->chParams[ui->comboBoxChNumber->currentIndex()].vCutOff);
         if (settings->chParams[ui->comboBoxChNumber->currentIndex()].vCutOff)
         {
@@ -195,6 +195,11 @@ void MainWindow::updateState()
                 ui->doubleSpinBoxVCuAutoEn->setValue((double)(settings->chParams[ui->comboBoxChNumber->currentIndex()].vAutoEnValue) / 100);
             }
         }
+
+        //ограничение тока
+        ui->currentControlWidget->show();
+        ui->checkBoxCurrent->setChecked(settings->chParams[ui->comboBoxChNumber->currentIndex()].currCutOff);
+        ui->doubleSpinBoxCurrent->setValue(settings->chParams[ui->comboBoxChNumber->currentIndex()].currCutOffValue / 100);
         break;
     default:
         break;
