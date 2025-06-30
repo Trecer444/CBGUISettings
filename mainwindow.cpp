@@ -21,6 +21,8 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
 {
+    this->setWindowIcon(QIcon(":/res/goose.ico"));
+
     ui->setupUi(this);
 
     singletonSettings* settings = singletonSettings::getInstance();
