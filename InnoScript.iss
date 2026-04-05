@@ -10,7 +10,7 @@ DefaultGroupName=CB GUI Settings
 UninstallDisplayIcon={app}\CBGUISettings.exe
 UninstallDisplayName=F800GS CB GUI Settings
 OutputBaseFilename=CBGUISettings_Installer
-OutputDir=D:\Documents\git\CBGUISettings\Releases\v0.2
+OutputDir=D:\Documents\git\CBGUISettings\Releases\v0.4
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
@@ -27,9 +27,9 @@ Name: "ru"; MessagesFile: "compiler:Languages\Russian.isl"
 Name: "desktopicon"; Description: "Создать ярлык на рабочем столе"
 
 [Files]
-Source: "D:\Documents\git\cummutationBordGUISettings\build\Desktop_Qt_6_7_0_MinGW_64_bit-Release\release\cummutationBordGUISettings.exe"; \
+Source: "D:\Documents\git\CBGUISettings\build\Desktop_Qt_6_7_0_MinGW_64_bit-release\release\cummutationBordGUISettings.exe"; \
     DestDir: "{app}"; DestName: "CBGUISettings.exe"; Flags: ignoreversion
-Source: "D:\Documents\git\cummutationBordGUISettings\build\Desktop_Qt_6_7_0_MinGW_64_bit-Release\release\*.dll"; \
+Source: "D:\Documents\git\CBGUISettings\build\Desktop_Qt_6_7_0_MinGW_64_bit-release\release\*.dll"; \
     DestDir: "{app}"; Flags: ignoreversion recursesubdirs
 Source: "D:\Documents\git\CBGUISettings\goose.ico"; DestDir: "{app}"; Flags: ignoreversion
 

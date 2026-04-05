@@ -130,6 +130,11 @@ $0 ...;$1 ...;...;$5 ...;*
 
 Используется [Inno Setup](https://jrsoftware.org/isinfo.php):
 Файл с конфигурацией установщика InnoScript.iss
+Команда для копирования DLL файлов:
+``` 
+windeployqt.exe --verbose 1 cummutationBordGUISettings.exe 
+```
+Вызывается из консаоли MinGW в папке release с cummutationBordGUISettings.exe
 
 
 ## 🧑‍💻 Автор
