@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include <connectionsettings.h>
+#include <serialconsol.h>
 #include <QSerialPort>
 #include <QSerialPortInfo>
 #include <settings.h>
@@ -10,6 +11,8 @@
 #include <qstatusbar.h>
 #include <qmessagebox.h>
 #include <QByteArray>
+#include <QPointer>
+#include <QTimer>
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -93,10 +96,19 @@ private slots:
 
     void on_pushButtonRead_clicked();
 
+    void on_action_triggered();
+
+    void onUartReadyRead(); //для асинхронной работы считывания из уарта
+
 private:
+    void parseParamsResponse(const QByteArray &responseData);
     Ui::MainWindow *ui;
     QSerialPortInfo serialPortInfo;
     QSerialPort serialPorts;
+    QPointer<serialconsol> mSerialConsol;
+    QByteArray mUartBuffer; //буфер для накопления данных уарта (если сообщение приходит частями)
+    bool mWaitingForParams = false; //флаг ожидания прихода всего сообщения в уарт
+
 
 
 };

@@ -732,6 +732,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
     <addaction name="connectionSettingsBtn"/>
     <addaction name="action_2"/>
     <addaction name="action_3"/>
+    <addaction name="action"/>
    </widget>
    <widget class="QMenu" name="menu_2">
     <property name="title">
@@ -767,6 +768,11 @@ li.checked::marker { content: &quot;\2612&quot;; }
   <action name="action_5">
    <property name="text">
     <string>Контакты</string>
+   </property>
+  </action>
+  <action name="action">
+   <property name="text">
+    <string>Монитор порта</string>
    </property>
   </action>
  </widget>

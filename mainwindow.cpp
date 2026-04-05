@@ -302,9 +302,9 @@ void MainWindow::updateState()
 
 void MainWindow::on_comboBoxSignal_currentIndexChanged(int index)
 {
-    updateState();
     singletonSettings* settings = singletonSettings::getInstance();
     settings->chParams[ui->comboBoxChNumber->currentIndex()].signalSource = index; //сохраняем в конфиг текущий выбранный параметр источника сигнала
+    updateState();
 }
 
 
@@ -528,6 +528,7 @@ int MainWindow::uartOpen()
 
         ui->statusbar->showMessage("Подключено", 0);
         qDebug() << "CONNECTED\n";
+        connect(&settings->serialPort, &QSerialPort::readyRead, this, &MainWindow::onUartReadyRead);
         return 0;
 
 
@@ -660,6 +661,10 @@ int MainWindow::uartSend()
     qDebug() << size << "\n\n";
     settings->serialPort.write(stringData.toUtf8(),size);
     settings->serialPort.waitForBytesWritten(500);
+    if (!mSerialConsol.isNull())
+    {
+        mSerialConsol->appendUartMessage(stringData.toLatin1(), true); //
+    }
     stringData.clear();
     return 0;
 }
@@ -668,82 +673,33 @@ void MainWindow::uartReceiveParams()
 {
     singletonSettings* settings = singletonSettings::getInstance();
 
-    settings->serialPort.clear(QSerialPort::AllDirections);
-    settings->serialPort.write("#GET-ParamList\n");
+    // Очищаем буфер перед новой командой
+    mUartBuffer.clear();
+    mWaitingForParams = true;
 
-    if (!settings->serialPort.waitForBytesWritten(100)) {
+    QByteArray command = "#GET-ParamList\n";
+    qint64 bytesWritten = settings->serialPort.write(command);
+
+    if (bytesWritten == -1) {
         qWarning() << "Ошибка записи в порт.";
+        mWaitingForParams = false;
         return;
     }
 
-    QByteArray responseData;
-
-    if (!settings->serialPort.waitForReadyRead(1000)) {
-        qWarning() << "Нет ответа от устройства.";
-        return;
+    // Вывод отправленной команды в консоль
+    if (!mSerialConsol.isNull()) {
+        mSerialConsol->appendUartMessage(QString::fromUtf8(command).toLatin1(), true); //если нужно будет обрезать в конце и начале пробелы, можно использовать trimmed() вместо toLatin1()
     }
 
-    // Сразу читаем всё, что есть
-    responseData += settings->serialPort.readAll();
-
-    // А теперь ждём остаток, если нужно
-    QElapsedTimer timer;
-    timer.start();
-    while (timer.elapsed() < 2000) {
-        if (settings->serialPort.waitForReadyRead(100)) {
-            responseData += settings->serialPort.readAll();
-            if (responseData.endsWith("*")) break;
+    // Таймаут на случай, если ответ не придёт
+    QTimer::singleShot(2000, this, [this]() {
+        if (mWaitingForParams) {
+            qWarning() << "Таймаут ожидания ответа на #GET-ParamList";
+            ui->statusbar->showMessage("Таймаут ожидания ответа на #GET-ParamList", 5000);
+            mWaitingForParams = false;
+            mUartBuffer.clear();
         }
-    }
-
-    qDebug() << "UART Raw Response:\n" << QString::fromUtf8(responseData);
-    qDebug() << "Bytes received:" << responseData.size();
-
-    QString data = QString::fromUtf8(responseData).trimmed();
-    QStringList packets = data.split(";", Qt::SkipEmptyParts);
-
-    for (const QString& packet : packets) {
-        if (!packet.startsWith("$"))
-            continue;
-
-        QStringList parts = packet.mid(1).split(" ", Qt::SkipEmptyParts);
-        if (parts.size() != 21) {
-            qWarning() << "Неверное количество параметров:" << packet;
-            continue;
-        }
-
-        bool ok = false;
-        int idx = parts[0].toInt(&ok);
-        if (!ok || idx < 0 || idx >= 6) {
-            qWarning() << "Неверный индекс канала:" << parts[0];
-            continue;
-        }
-
-        Params& ch = settings->chParams[idx];
-        int i = 1;
-        ch.signalSource        = parts[i++].toInt();
-        ch.pwmValue            = parts[i++].toInt();
-        ch.flashType           = parts[i++].toInt();
-        ch.flashCount          = parts[i++].toInt();
-        ch.heater1             = parts[i++].toInt();
-        ch.heater2             = parts[i++].toInt();
-        ch.delayTimerValue     = parts[i++].toInt();
-        ch.shutdownTimerValue  = parts[i++].toInt();
-        ch.vCutOffValue        = parts[i++].toInt();
-        ch.vAutoEnValue        = parts[i++].toInt();
-        ch.flashFreq           = parts[i++].toInt();
-        ch.currCutOffValue     = parts[i++].toInt();
-        ch.engineOn            = parts[i++].toInt() != 0;
-        ch.shutdownTimer       = parts[i++].toInt() != 0;
-        ch.vCutOff             = parts[i++].toInt() != 0;
-        ch.vAutoEn             = parts[i++].toInt() != 0;
-        ch.pwm                 = parts[i++].toInt() != 0;
-        ch.currCutOff          = parts[i++].toInt() != 0;
-        ch.delayTimer          = parts[i++].toInt() != 0;
-        ch.flash               = parts[i++].toInt() != 0;
-    }
-
-    qDebug() << "Параметры успешно загружены из UART.";
+    });
 }
 
 void MainWindow::on_pushButtonConnect_clicked()
@@ -808,3 +764,105 @@ void MainWindow::on_pushButtonRead_clicked()
     updateState();
 }
 
+
+void MainWindow::on_action_triggered()
+{
+    if (mSerialConsol.isNull())
+    {
+        mSerialConsol = new serialconsol;
+        mSerialConsol->setAttribute(Qt::WA_DeleteOnClose);
+    }
+    mSerialConsol->show();
+    mSerialConsol->raise();          //вывести на передний план
+    mSerialConsol->activateWindow(); //активировать
+}
+
+//Асинхронное чтение из уарта
+void MainWindow::onUartReadyRead()
+{
+
+    // Читаем все свежие данные
+    singletonSettings* settings = singletonSettings::getInstance();
+    QByteArray newData = settings->serialPort.readAll();
+    if (newData.isEmpty()) return;
+
+    // Вывод в консоль (если открыта)
+    if (!mSerialConsol.isNull()) {
+        mSerialConsol->appendUartMessage(QString::fromUtf8(newData).trimmed(), false);
+    }
+
+    // Добавляем в буфер
+    mUartBuffer.append(newData);
+
+    // Если ожидаем ответ на #GET-ParamList
+    if (mWaitingForParams) {
+        int starPos = mUartBuffer.indexOf('*');
+        if (starPos != -1) {
+            // Извлекаем полный ответ (включая '*')
+            QByteArray fullResponse = mUartBuffer.left(starPos + 1);
+            // Оставляем остаток (если есть) в буфере для следующих команд
+            mUartBuffer = mUartBuffer.mid(starPos + 1);
+
+            // Парсим ответ
+            parseParamsResponse(fullResponse);
+
+            // Сбрасываем флаг ожидания
+            mWaitingForParams = false;
+        }
+    }
+}
+
+void MainWindow::parseParamsResponse(const QByteArray &responseData)
+{
+    qDebug() << "UART Raw Response:\n" << QString::fromUtf8(responseData);
+    qDebug() << "Bytes received:" << responseData.size();
+
+    QString data = QString::fromUtf8(responseData).trimmed();
+    QStringList packets = data.split(";", Qt::SkipEmptyParts);
+
+    for (const QString& packet : packets) {
+        if (!packet.startsWith("$"))
+            continue;
+
+        QStringList parts = packet.mid(1).split(" ", Qt::SkipEmptyParts);
+        if (parts.size() != 21) {
+            qWarning() << "Неверное количество параметров:" << packet;
+            continue;
+        }
+
+        bool ok = false;
+        int idx = parts[0].toInt(&ok);
+        if (!ok || idx < 0 || idx >= 6) {
+            qWarning() << "Неверный индекс канала:" << parts[0];
+            continue;
+        }
+
+        singletonSettings* settings = singletonSettings::getInstance();
+        Params& ch = settings->chParams[idx];
+        int i = 1;
+        ch.signalSource        = parts[i++].toInt();
+        ch.pwmValue            = parts[i++].toInt();
+        ch.flashType           = parts[i++].toInt();
+        ch.flashCount          = parts[i++].toInt();
+        ch.heater1             = parts[i++].toInt();
+        ch.heater2             = parts[i++].toInt();
+        ch.delayTimerValue     = parts[i++].toInt();
+        ch.shutdownTimerValue  = parts[i++].toInt();
+        ch.vCutOffValue        = parts[i++].toInt();
+        ch.vAutoEnValue        = parts[i++].toInt();
+        ch.flashFreq           = parts[i++].toInt();
+        ch.currCutOffValue     = parts[i++].toInt();
+        ch.engineOn            = parts[i++].toInt() != 0;
+        ch.shutdownTimer       = parts[i++].toInt() != 0;
+        ch.vCutOff             = parts[i++].toInt() != 0;
+        ch.vAutoEn             = parts[i++].toInt() != 0;
+        ch.pwm                 = parts[i++].toInt() != 0;
+        ch.currCutOff          = parts[i++].toInt() != 0;
+        ch.delayTimer          = parts[i++].toInt() != 0;
+        ch.flash               = parts[i++].toInt() != 0;
+    }
+
+    qDebug() << "Параметры успешно загружены из UART.";
+
+    MainWindow::updateState();
+}

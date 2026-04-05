@@ -11,16 +11,19 @@ CONFIG += c++17
 SOURCES += \
     connectionsettings.cpp \
     main.cpp \
-    mainwindow.cpp
+    mainwindow.cpp \
+    serialconsol.cpp
 
 HEADERS += \
     connectionsettings.h \
     mainwindow.h \
+    serialconsol.h \
     settings.h
 
 FORMS += \
     connectionsettings.ui \
-    mainwindow.ui
+    mainwindow.ui \
+    serialconsol.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
